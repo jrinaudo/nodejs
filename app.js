@@ -12,12 +12,22 @@ var dishRouter = require("./routes/dishRouter");
 var promoRouter = require("./routes/promoRouter");
 var leaderRouter = require("./routes/leaderRouter");
 
+// connect to MongoDB
 const mongoose = require("mongoose");
 const url = "mongodb://localhost:27018/conFusion";
 const connect = mongoose.connect(url);
+connect.then(
+  db => {
+    console.log("Connected correctly to server");
+  },
+  err => {
+    console.log(err);
+  }
+);
 
 var app = express();
 
+// use Express sessions
 app.use(
   session({
     name: "session-id",
@@ -28,52 +38,28 @@ app.use(
   })
 );
 
+app.use("/", indexRouter);
+app.use("/users", usersRouter);
+
 function auth(req, res, next) {
   console.log(req.session);
 
   if (!req.session.user) {
-    var authHeader = req.headers.authorization;
-    if (!authHeader) {
-      var err = new Error("You are not authenticated!");
-      res.setHeader("WWW-Authenticate", "Basic");
-      err.status = 401;
-      next(err);
-      return;
-    }
-    var auth = new Buffer.from(authHeader.split(" ")[1], "base64").toString().split(":");
-    var user = auth[0];
-    var pass = auth[1];
-    if (user == "admin" && pass == "password") {
-      req.session.user = "admin";
-      next(); // authorized
-    } else {
-      var err = new Error("You are not authenticated!");
-      res.setHeader("WWW-Authenticate", "Basic");
-      err.status = 401;
-      next(err);
-    }
+    var err = new Error("You are not authenticated!");
+    err.status = 403;
+    return next(err);
   } else {
-    if (req.session.user === "admin") {
-      console.log("req.session: ", req.session);
+    if (req.session.user === "authenticated") {
       next();
     } else {
       var err = new Error("You are not authenticated!");
-      err.status = 401;
-      next(err);
+      err.status = 403;
+      return next(err);
     }
   }
 }
 
 app.use(auth);
-
-connect.then(
-  db => {
-    console.log("Connected correctly to server");
-  },
-  err => {
-    console.log(err);
-  }
-);
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
