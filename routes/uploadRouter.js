@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const authenticate = require("../authenticate");
 const multer = require("multer");
 const cors = require("./cors");
+const uploadRouter = express.Router();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -22,8 +23,6 @@ const imageFileFilter = (req, file, cb) => {
 };
 
 const upload = multer({ storage: storage, fileFilter: imageFileFilter });
-
-const uploadRouter = express.Router();
 
 uploadRouter.use(bodyParser.json());
 
